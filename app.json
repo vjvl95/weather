@@ -26,6 +26,7 @@
       "package": "com.myapp.app"
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [

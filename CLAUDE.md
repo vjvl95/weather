@@ -43,11 +43,12 @@ rm -rf src/pages/detail
 ```bash
 npm install
 
-# NativeWind 4가지 설정 파일 확인 (ERR-002 방지)
-# ✅ metro.config.js 존재 확인
+# NativeWind 핵심 설정 확인 (ERR-002 방지)
+# ✅ metro.config.js withNativeWind 확인
 # ✅ tailwind.config.js content 경로 확인
-# ✅ babel.config.js jsxImportSource 확인
+# ✅ babel.config.js jsxImportSource + nativewind/babel 확인
 # ✅ src/global.css @tailwind 지시문 확인
+# ✅ web 지원 시 app.json web.bundler = "metro" 확인
 ```
 
 ### 4단계 — EAS 설정 (네이티브 빌드 필요 시)
@@ -57,7 +58,8 @@ npm install
 eas build:configure
 
 # Android 빌드 전 확인 (ERR-003, ERR-005, ERR-006 방지)
-# ✅ 루트에 index.js 존재 확인
+# ✅ package.json main = expo-router/entry 확인
+# ✅ (템플릿 유지 시) 루트 index.js 브리지 확인
 # ✅ babel-preset-expo 설치 확인
 # ✅ Android SDK 경로 설정 확인
 ```
@@ -99,6 +101,9 @@ docs/work-orders/ROADMAP.md ← 마일스톤 및 WO 목록 작성
 ├── assets/                     # 이미지, 폰트, 사운드
 ├── app.json                    # Expo 앱 설정
 ├── babel.config.js             # Babel 설정 (reanimated/plugin 마지막!)
+├── eas.json                    # EAS Build 프로필
+├── index.js                    # expo-router entry bridge (호환성용)
+├── jest.config.js              # Jest 설정
 ├── metro.config.js             # Metro 설정 (withNativeWind 필수)
 ├── tailwind.config.js          # Tailwind/NativeWind 설정
 ├── tsconfig.json               # TypeScript + 절대경로 별칭
@@ -133,7 +138,7 @@ docs/
 |------|-----------|
 | `001_expo-router-src-app-conflict.md` | `src/app/` 존재 시 라우팅 완전 실패 |
 | `002_metro-config-missing-nativewind.md` | NativeWind 스타일 전체 미적용 (사일런트 실패) |
-| `003_index-js-missing-android.md` | Android 네이티브 빌드 번들 로딩 실패 |
+| `003_index-js-missing-android.md` | expo-router entry 설정과 index.js 브리지 혼동 |
 | `004_redirect-usefonts-infinite-remount.md` | 무한 리마운트 루프 (가장 복잡한 버그) |
 | `005_babel-preset-expo-missing.md` | Gradle 빌드 실패 |
 | `006_android-sdk-location-not-found.md` | Android SDK 경로 미설정 |
@@ -307,7 +312,9 @@ import { ErrorBoundary } from '@shared/ui';
 - `app/` 라우트 파일은 thin wrapper만 — UI 로직은 `src/pages/`에
 
 ### NativeWind
-- 4가지 설정 파일 모두 필요: `metro.config.js`, `tailwind.config.js`, `babel.config.js`, `src/global.css` (ERR-002)
+- 핵심 설정 4개가 모두 필요: `metro.config.js`, `tailwind.config.js`, `babel.config.js`, `src/global.css` (ERR-002)
+- `babel.config.js`에는 `jsxImportSource: 'nativewind'`와 `'nativewind/babel'`이 모두 있어야 함
+- web 지원 시 `app.json`의 `expo.web.bundler`를 `"metro"`로 유지
 - 동적 클래스 생성 금지: `bg-${color}` ❌ → `isDark ? 'bg-gray-900' : 'bg-white'` ✅
 - Skia Canvas 내부에 NativeWind 클래스 사용 불가
 
@@ -328,7 +335,8 @@ import { ErrorBoundary } from '@shared/ui';
 - `Math.random()` 금지 → 시드 기반 RNG(`mulberry32`) 사용
 
 ### Android 빌드
-- 루트에 `index.js` 필요: `import 'expo-router/entry';` (ERR-003)
+- 기본 엔트리는 `package.json`의 `"main": "expo-router/entry"`
+- 템플릿의 루트 `index.js`는 `import 'expo-router/entry';` 한 줄만 유지하는 호환성 브리지 (ERR-003)
 - `babel-preset-expo` 설치 확인 (ERR-005)
 - Android SDK 경로 설정 확인 (ERR-006)
 

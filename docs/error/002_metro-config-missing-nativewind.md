@@ -24,6 +24,16 @@ const config = getDefaultConfig(__dirname);
 module.exports = withNativeWind(config, { input: './src/global.css' });
 ```
 
+```javascript
+// babel.config.js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
+  };
+};
+```
+
 ### 왜 빠졌나?
 
 프로젝트 초기 세팅 시 `npx create-expo-app`으로 생성하면 `metro.config.js`가 포함되지 않는 경우가 있다. NativeWind 설치 가이드의 Metro 설정 단계가 누락된 것으로 추정.
@@ -39,11 +49,12 @@ npx expo start --clear
 
 ## 교훈
 
-- NativeWind v4 설치 시 **4가지 파일**을 모두 확인해야 한다:
+- NativeWind v4 설치 시 **4가지 핵심 설정**을 모두 확인해야 한다:
   1. `tailwind.config.js` — content 경로, presets
   2. `metro.config.js` — `withNativeWind()` 래퍼 (**이것이 빠지기 쉬움**)
-  3. `babel.config.js` — `jsxImportSource: 'nativewind'`
+  3. `babel.config.js` — `jsxImportSource: 'nativewind'` + `nativewind/babel`
   4. `src/global.css` — `@tailwind` 지시문
+- 웹까지 지원한다면 `app.json`의 `expo.web.bundler = "metro"`도 함께 확인한다
 - 스타일 미적용은 에러 없이 발생하므로 디버깅이 어려움
 - NativeWind v2→v4 마이그레이션 시에도 Metro 설정 변경이 필요
 

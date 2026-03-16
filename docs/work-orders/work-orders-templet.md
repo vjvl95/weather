@@ -27,7 +27,7 @@
 - **프레임워크**: Expo SDK 55 (Managed → EAS Build)
 - **스타일링**: NativeWind v4 (Tailwind CSS for RN)
 - **아키텍처**: FSD (Feature-Sliced Design)
-- **경로**: 절대경로 필수 (`@app/`, `@pages/`, `@widgets/`, `@features/`, `@entities/`, `@shared/`)
+- **경로**: 절대경로 필수 (`@pages/`, `@widgets/`, `@features/`, `@entities/`, `@shared/`)
 - **패키지 매니저**: npm
 - (이 WO에 관련된 기술만 기재)
 
