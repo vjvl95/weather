@@ -16,7 +16,6 @@
       "bundleIdentifier": "com.myapp.app"
     },
     "android": {
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/android-icon-foreground.png",
