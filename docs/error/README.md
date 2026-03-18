@@ -15,6 +15,7 @@
 | ERR-004 | [004_redirect-usefonts-infinite-remount.md](./004_redirect-usefonts-infinite-remount.md) | `<Redirect>` + `useFonts` 에러 조합으로 무한 리마운트 루프 | expo-router + expo-font |
 | ERR-005 | [005_babel-preset-expo-missing.md](./005_babel-preset-expo-missing.md) | `babel-preset-expo` 누락으로 Gradle 빌드 실패 | Android native build |
 | ERR-006 | [006_android-sdk-location-not-found.md](./006_android-sdk-location-not-found.md) | Android SDK 경로 미설정으로 Gradle 빌드 실패 | macOS + Android CLI |
+| ERR-007 | [007_windows-local-android-run-checklist.md](./007_windows-local-android-run-checklist.md) | Windows에서 Expo Android 로컬 실행이 안 될 때 바로 확인하는 체크리스트 | Windows + Expo Dev Client |
 
 ---
 
@@ -48,6 +49,8 @@ docs/error/
 - `index.js`를 둘 경우 `import 'expo-router/entry';` 한 줄만 유지 → ERR-003
 - `babel-preset-expo` 설치 확인 → ERR-005
 - Android SDK 경로 설정 확인 → ERR-006
+- Windows에서는 `npm install` 후 `npm run doctor` 재확인 → ERR-007
+- Metro 포트 충돌 시 dev server 포트와 debug app 포트를 반드시 맞춤 → ERR-007
 
 ### expo-router _layout.tsx 작성 주의
 - `<Redirect>`를 `<Stack>` 외부 조건부 렌더 금지 → ERR-004
