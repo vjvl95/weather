@@ -1,8 +1,8 @@
-# 작업 지시서 (Work Orders) — [프로젝트명]
+# 작업 지시서 (Work Orders) — 몽글날씨
 
 ## 마일스톤 목표
 
-> **"[이 마일스톤에서 달성할 핵심 목표를 한 문장으로]"**
+> **"몽글이가 날씨를 알려주는 v1 앱 완성 — GPS 위치 기반 현재/시간별/주간 날씨 + 캐릭터 교감"**
 
 ---
 
@@ -10,18 +10,31 @@
 
 ```
 Wave 1 (동시 진행 가능) ─ 선행 작업, 의존성 없음
-├── WO-001: [작업 제목]
-└── WO-002: [작업 제목]
+├── WO-001: 공통 타입 및 날씨 상수         → src/shared/types/, src/shared/config/
+└── WO-002: 에셋 배치 및 탭 네비게이션     → src/shared/assets/, app/
         │
         ▼
 Wave 2 (동시 진행 가능) ─ Wave 1 완료 후
-├── WO-003: [작업 제목]   [의존: WO-001]  → src/shared/config/
-├── WO-004: [작업 제목]   [의존: WO-002]  → src/shared/lib/
-└── WO-005: [작업 제목]   [의존: WO-002]  → src/entities/[도메인]/
+├── WO-003: 기상청 API 유틸 + 좌표 변환   [의존: WO-001]  → src/shared/lib/
+├── WO-004: Weather 엔티티                 [의존: WO-001]  → src/entities/weather/
+├── WO-005: Location Feature               [의존: WO-001]  → src/features/location/
+└── WO-007: Character Feature              [의존: WO-001]  → src/features/character/
         │
         ▼
 Wave 3 (동시 진행 가능) ─ Wave 2 완료 후
-└── WO-006: [작업 제목]   [의존: WO-003, WO-004, WO-005]  → src/features/[기능]/
+├── WO-006: Weather Fetch Feature          [의존: WO-003, WO-005]  → src/features/weather-fetch/
+├── WO-008: Character View 위젯           [의존: WO-002, WO-007]  → src/widgets/character-view/
+└── WO-009: Forecast 위젯                  [의존: WO-004]          → src/widgets/forecast/
+        │
+        ▼
+Wave 4 (동시 진행 가능) ─ Wave 3 완료 후
+├── WO-010: 홈 페이지 조립                 [의존: WO-006, WO-008]  → src/pages/home/
+├── WO-011: 시간별/주간 예보 페이지        [의존: WO-006, WO-009]  → src/pages/hourly/, weekly/
+└── WO-012: 설정 + 도시 검색 페이지        [의존: WO-005]          → src/pages/settings/, city-search/
+        │
+        ▼
+Wave 5 ─ Wave 4 완료 후
+└── WO-013: 통합 테스트 및 테마 연동       [의존: WO-010~012]      → app/, features/theme-manager/
 ```
 
 ---
@@ -39,26 +52,34 @@ Wave 3 (동시 진행 가능) ─ Wave 2 완료 후
 ## WO 총괄표
 
 | WO | 제목 | Wave | 담당 경로 | 의존성 | 예상 소요 |
-|----|------|------|-----------|--------|-----------|
-| 001 | [제목] | 1 | `src/shared/types/` | 없음 | 1~2h |
-| 002 | [제목] | 1 | `app/*` | 없음 | 1~2h |
-| 003 | [제목] | 2 | `src/shared/config/` | WO-002 | 1~2h |
-| 004 | [제목] | 2 | `src/shared/lib/` | WO-001 | 2~3h |
-| 005 | [제목] | 2 | `src/entities/[도메인]/` | WO-001 | 2~3h |
-| 006 | [제목] | 3 | `src/features/[기능]/` | WO-003,004,005 | 3~4h |
+|----|------|:----:|-----------|--------|:---------:|
+| 001 | 공통 타입 및 날씨 상수 | 1 | `src/shared/types/`, `src/shared/config/` | 없음 | 1~2h |
+| 002 | 에셋 배치 및 탭 네비게이션 | 1 | `src/shared/assets/`, `app/` | 없음 | 1~2h |
+| 003 | 기상청 API 유틸 + 좌표 변환 | 2 | `src/shared/lib/` | WO-001 | 2~3h |
+| 004 | Weather 엔티티 | 2 | `src/entities/weather/` | WO-001 | 1~2h |
+| 005 | Location Feature | 2 | `src/features/location/` | WO-001 | 2~3h |
+| 007 | Character Feature | 2 | `src/features/character/` | WO-001 | 1~2h |
+| 006 | Weather Fetch Feature | 3 | `src/features/weather-fetch/` | WO-003, 005 | 2~3h |
+| 008 | Character View 위젯 | 3 | `src/widgets/character-view/` | WO-002, 007 | 3~4h |
+| 009 | Forecast 위젯 | 3 | `src/widgets/hourly-forecast/`, `weekly-forecast/` | WO-004 | 2~3h |
+| 010 | 홈 페이지 조립 | 4 | `src/pages/home/` | WO-006, 008 | 2~3h |
+| 011 | 시간별/주간 예보 페이지 | 4 | `src/pages/hourly/`, `src/pages/weekly/` | WO-006, 009 | 1~2h |
+| 012 | 설정 + 도시 검색 페이지 | 4 | `src/pages/settings/`, `src/pages/city-search/` | WO-005 | 2~3h |
+| 013 | 통합 테스트 및 테마 연동 | 5 | `app/`, `src/features/theme-manager/` | WO-010~012 | 2~3h |
 
 ---
 
 ## 작업 순서 요약
 
 ```
-[1일차]  Wave 1 → 2명이 WO-001, WO-002 동시 진행
-[2일차]  Wave 2 → 최대 N명이 WO-003~005 동시 진행
-[3일차]  Wave 3 → 2명이 WO-006 진행
+Wave 1 → WO-001, WO-002 동시 진행
+Wave 2 → WO-003, WO-004, WO-005, WO-007 동시 진행
+Wave 3 → WO-006, WO-008, WO-009 동시 진행
+Wave 4 → WO-010, WO-011, WO-012 동시 진행
+Wave 5 → WO-013 진행 (최종 통합)
 ```
 
 > 각 Wave는 이전 Wave가 모두 완료 & 머지된 후 시작한다.
-> 실제 일정은 WO별 난이도와 인원에 따라 조정.
 
 ---
 
@@ -70,8 +91,10 @@ Wave 3 (동시 진행 가능) ─ Wave 2 완료 후
 | 언어 | TypeScript (strict mode) |
 | 아키텍처 | FSD (Feature-Sliced Design) |
 | 스타일링 | NativeWind v4 |
-| 상태관리 | zustand 5.x |
+| 상태관리 | Zustand 5.x |
+| 애니메이션 | React Native Reanimated 4.x |
 | 네비게이션 | expo-router |
+| 날씨 API | 기상청 단기/중기예보 (공공데이터포털) |
 | 패키지 매니저 | npm |
 
 ---
