@@ -6,6 +6,7 @@
 
 ```
 docs/
+├── CHARACTER_V1_ARCHITECTURE.md  # 몽글이 v1 캐릭터 아키텍처
 ├── SETUP_CHECKLIST.md  # 새 프로젝트 시작 체크리스트
 ├── design/             # 🎨 디자인 시스템 스펙
 ├── error/              # 🚨 트러블슈팅 기록 (가장 중요)
@@ -16,6 +17,7 @@ docs/
 
 ## 하위 폴더별 안내
 
+- **CHARACTER_V1_ARCHITECTURE.md**: 몽글이 v1 캐릭터 구현 방향 문서
 - **error/**: 에러 목록은 `docs/error/README.md` 참고
 - **design/**: 디자인 스펙 파일 목록은 `docs/design/` 안에서 직접 확인
 - **work-orders/**: WO 시스템 파일 역할은 `docs/work-orders/README.md` 참고

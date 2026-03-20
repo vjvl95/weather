@@ -35,4 +35,6 @@ export interface ThemeState {
   colors: ColorTokens;
   typography: TypographyTokens;
   spacing: SpacingTokens;
+  /** 현재 날씨 배경색 */
+  weatherBackgroundColor: string;
 }

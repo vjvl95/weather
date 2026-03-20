@@ -1,0 +1,4 @@
+interface:
+  display_name: "몽글 WO 시작"
+  short_description: "WO 구현 시작부터 완료 처리까지 수행"
+  default_prompt: "Start a Monggeul weather project Work Order, normalize the WO ID, update WO and roadmap statuses, implement only owned paths, record pending device checks, and archive the finished WO."

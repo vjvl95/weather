@@ -1,68 +1,71 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useCounterStore } from '@features/counter';
-import { ExampleCard } from '@entities/example';
-import { useTheme } from '@features/theme-manager';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { CharacterView } from '@widgets/character-view';
+import { useWeatherFetch } from '@features/weather-fetch';
+import { useLocation } from '@features/location';
+import { useCharacterState } from '@features/character';
+import { TemperatureText } from '@entities/weather';
 
 export function HomePage() {
   const router = useRouter();
-  const { count, increment, decrement } = useCounterStore();
-  const { colors, isDark } = useTheme();
+  const { currentLocation, requestGpsLocation } = useLocation();
+  const { current, isLoading, error, fetchWeather } = useWeatherFetch();
+  const { updateForWeather } = useCharacterState();
+
+  // 초기 위치 + 날씨 로딩
+  useEffect(() => {
+    requestGpsLocation();
+  }, []);
+
+  // 위치 변경 시 날씨 가져오기 (FSD: gridX/gridY 파라미터로 전달)
+  useEffect(() => {
+    if (currentLocation) {
+      fetchWeather(currentLocation.gridX, currentLocation.gridY);
+    }
+  }, [currentLocation]);
+
+  // 날씨 변경 시 캐릭터 업데이트
+  useEffect(() => {
+    if (current) {
+      updateForWeather(current.condition);
+    }
+  }, [current]);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={[isDark ? colors.surface : colors.primary, colors.background]}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 300 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        className="opacity-20"
-      />
+    <View className="flex-1">
+      <CharacterView />
 
-      <View className="flex-1 items-center justify-center px-6">
-        <Text
-          className="text-4xl font-bold mb-8"
-          style={{ color: colors.text.primary }}
+      {/* 오버레이: 위치 + 날씨 정보 */}
+      <SafeAreaView className="absolute inset-0" edges={['top']}>
+        {/* 상단: 위치 */}
+        <TouchableOpacity
+          className="items-center pt-4"
+          onPress={() => router.push('/city-search')}
         >
-          Home
-        </Text>
+          <Text className="text-white/80 text-sm">현재 위치</Text>
+          <Text className="text-white text-lg font-semibold">
+            {currentLocation?.name ?? '위치를 불러오는 중...'}
+          </Text>
+        </TouchableOpacity>
 
-        <ExampleCard title="Counter" description="FSD 패턴 예시: Feature → Entity → Shared">
-          <View className="flex-row items-center gap-4 mt-4">
-            <Pressable
-              className="w-12 h-12 rounded-full items-center justify-center active:opacity-70"
-              style={{ backgroundColor: colors.primary }}
-              onPress={decrement}
-            >
-              <Text className="text-white text-2xl font-bold">-</Text>
-            </Pressable>
-
-            <Text
-              className="text-3xl font-bold w-16 text-center"
-              style={{ color: colors.text.primary }}
-            >
-              {count}
-            </Text>
-
-            <Pressable
-              className="w-12 h-12 rounded-full items-center justify-center active:opacity-70"
-              style={{ backgroundColor: colors.primary }}
-              onPress={increment}
-            >
-              <Text className="text-white text-2xl font-bold">+</Text>
-            </Pressable>
+        {/* 하단: 현재 온도 + 날씨 설명 */}
+        {current && (
+          <View className="absolute bottom-24 left-0 right-0 items-center">
+            <TemperatureText temperature={current.temperature} size="lg" />
+            <Text className="text-white text-base mt-1">{current.description}</Text>
           </View>
-        </ExampleCard>
+        )}
 
-        <Pressable
-          className="mt-12 px-10 py-4 rounded-2xl active:opacity-80 shadow-sm"
-          style={{ backgroundColor: colors.primary }}
-          onPress={() => router.push('/detail')}
-        >
-          <Text className="text-white font-bold text-lg">Open Detail</Text>
-        </Pressable>
-      </View>
+        {/* 에러 표시 */}
+        {error && (
+          <View className="absolute bottom-32 left-0 right-0 items-center px-8">
+            <Text className="text-red-300 text-sm text-center">{error}</Text>
+          </View>
+        )}
+      </SafeAreaView>
     </View>
   );
 }

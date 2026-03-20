@@ -1,0 +1,4 @@
+interface:
+  display_name: "몽글 WO 검수"
+  short_description: "WO 문서 정합성과 규칙 준수 점검"
+  default_prompt: "Inspect a Monggeul weather project Work Order document, check ownership and dependency consistency, write CHECK-WO output, and update CHECK-ROAD status."

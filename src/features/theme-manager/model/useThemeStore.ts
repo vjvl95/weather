@@ -49,6 +49,7 @@ const spacing: SpacingTokens = {
 
 interface ThemeActions {
   setMode: (mode: ThemeMode) => void;
+  setWeatherBackgroundColor: (color: string) => void;
 }
 
 export const useThemeStore = create<ThemeState & ThemeActions>((set) => ({
@@ -56,7 +57,9 @@ export const useThemeStore = create<ThemeState & ThemeActions>((set) => ({
   colors: lightColors,
   typography,
   spacing,
+  weatherBackgroundColor: '#87CEEB',
   setMode: (mode) => set({ mode }),
+  setWeatherBackgroundColor: (color) => set({ weatherBackgroundColor: color }),
 }));
 
 export { lightColors, darkColors };

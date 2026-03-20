@@ -1,0 +1,4 @@
+interface:
+  display_name: "몽글 WO 리뷰"
+  short_description: "구현된 WO 코드가 작업지시서와 맞는지 검토"
+  default_prompt: "Review a completed Monggeul weather project Work Order against its WO, inspect only the owned files, write REVIEW-WO output, and update roadmap review statuses."

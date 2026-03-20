@@ -1,0 +1,4 @@
+interface:
+  display_name: "몽글 CHECK 반영"
+  short_description: "CHECK 결과를 분류하고 수정 반영"
+  default_prompt: "Apply Monggeul weather project CHECK findings by classifying issues, fixing safe code and doc problems, updating CHECK-WO output, and setting the next CHECK-ROAD status."

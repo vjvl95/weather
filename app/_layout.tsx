@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { ErrorBoundary } from '@shared/ui';
 import { useTheme } from '@features/theme-manager';
+import { hydrateLocationStore } from '@features/location';
 
 // 앱 실행 시 SplashScreen 유지
 SplashScreen.preventAutoHideAsync();
@@ -23,8 +24,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        // 인위적인 지연이나 초기 설정 로직 (Zustand Hydration 등)을 여기에 추가 가능
-        // await new Promise(resolve => setTimeout(resolve, 500));
+        await hydrateLocationStore();
       } catch (e) {
         console.warn(e);
       } finally {
@@ -52,7 +52,7 @@ export default function RootLayout() {
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="detail" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="city-search" options={{ presentation: 'modal' }} />
         </Stack>
       </GestureHandlerRootView>
     </ErrorBoundary>
