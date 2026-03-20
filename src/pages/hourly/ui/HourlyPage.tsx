@@ -1,10 +1,13 @@
 import { View, Text, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState, useMemo } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { useWeatherFetch } from '@features/weather-fetch';
 import { useLocation } from '@features/location';
 import { useCharacterState } from '@features/character';
+import { WeatherBackground, AmbientEffects } from '@widgets/character-view';
 import { WeatherIcon } from '@entities/weather';
+import { getSunTimes } from '@shared/lib';
 import type { HourlyForecast } from '@shared/types';
 
 /** 날짜별로 예보를 그룹핑 */
@@ -51,12 +54,25 @@ function getWindDirection(deg: number): string {
   return dirs[Math.round(deg / 45) % 8];
 }
 
+/** 대기질 등급 → 텍스트 색상 */
+function getAqColor(grade: string): string {
+  switch (grade) {
+    case '좋음': return 'text-green-400';
+    case '보통': return 'text-blue-300';
+    case '나쁨': return 'text-yellow-400';
+    case '매우나쁨': return 'text-red-400';
+    default: return 'text-white';
+  }
+}
+
 export function HourlyPage() {
-  const { current, hourly, isLoading, error, fetchWeather } = useWeatherFetch();
+  const { current, hourly, airQuality, isLoading, error, fetchWeather } = useWeatherFetch();
   const { currentLocation, requestGpsLocation, isLoading: locationLoading } = useLocation();
   const { presentation } = useCharacterState();
 
-  const bgColor = presentation?.backgroundColors?.[0] ?? '#87CEEB';
+  const bgColors = presentation?.backgroundColors ?? ['#87CEEB', '#5BA3D9'] as [string, string];
+  const effectPreset = presentation?.effectPreset ?? 'sun-glow';
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (!currentLocation && !locationLoading) {
@@ -92,7 +108,12 @@ export function HourlyPage() {
     : 0;
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: bgColor }} edges={['top']}>
+    <WeatherBackground colors={bgColors}>
+    <View className="flex-1">
+      <View className="absolute inset-0" style={{ zIndex: 0, opacity: 0.2 }} pointerEvents="none">
+        {isFocused && <AmbientEffects effectPreset={effectPreset} />}
+      </View>
+    <SafeAreaView className="flex-1" style={{ zIndex: 1 }} edges={['top']}>
       {noLocation ? (
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-white/80 text-base text-center mb-4">위치 정보가 필요해요</Text>
@@ -134,11 +155,19 @@ export function HourlyPage() {
                 </View>
               </View>
               <View className="items-end">
-                {activeGroup && (
-                  <Text className="text-white/50 text-xs">
-                    ↓{Math.round(activeGroup.minTemp)}° ↑{Math.round(activeGroup.maxTemp)}°C
-                  </Text>
-                )}
+                {currentLocation && (() => {
+                  const sun = getSunTimes(currentLocation.latitude, currentLocation.longitude);
+                  return (
+                    <>
+                      <Text className="text-white/70 text-sm">
+                        {'\u2600\uFE0F'} {sun.sunrise}
+                      </Text>
+                      <Text className="text-white/70 text-sm mt-0.5">
+                        {'\uD83C\uDF19'} {sun.sunset}
+                      </Text>
+                    </>
+                  );
+                })()}
               </View>
             </View>
           )}
@@ -188,11 +217,9 @@ export function HourlyPage() {
                       <Text className={`text-sm ${isFirst ? 'font-bold text-white' : 'text-white/90'}`}>
                         {Math.round(item.temperature)}°
                       </Text>
-                      {item.rainChance > 0 && (
-                        <Text className={`text-xs mt-1 ${item.rainChance >= 50 ? 'text-blue-300' : 'text-white/40'}`}>
-                          {item.rainChance}%
-                        </Text>
-                      )}
+                      <Text className={`text-xs mt-1 ${item.rainChance >= 50 ? 'text-blue-300' : 'text-white/40'}`}>
+                        💧{item.rainChance}%
+                      </Text>
                     </View>
                   );
                 })}
@@ -249,10 +276,66 @@ export function HourlyPage() {
                   </Text>
                 </View>
               </View>
+
+              {/* 대기질 카드 */}
+              {airQuality && (
+                <>
+                  <Text className="text-white/70 text-sm mt-5 mb-3">대기질</Text>
+                  <View className="flex-row gap-3">
+                    {/* 미세먼지 PM10 */}
+                    <View className="flex-1 p-4 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                      <Text className="text-white/50 text-xs">😷 미세먼지</Text>
+                      <Text className={`text-2xl font-bold mt-1 ${getAqColor(airQuality.pm10Grade)}`}>
+                        {airQuality.pm10Value ?? '-'}
+                      </Text>
+                      <Text className="text-white/40 text-xs mt-1">
+                        {airQuality.pm10Grade} · PM10 ㎍/㎥
+                      </Text>
+                    </View>
+
+                    {/* 초미세먼지 PM2.5 */}
+                    <View className="flex-1 p-4 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                      <Text className="text-white/50 text-xs">🫁 초미세먼지</Text>
+                      <Text className={`text-2xl font-bold mt-1 ${getAqColor(airQuality.pm25Grade)}`}>
+                        {airQuality.pm25Value ?? '-'}
+                      </Text>
+                      <Text className="text-white/40 text-xs mt-1">
+                        {airQuality.pm25Grade} · PM2.5 ㎍/㎥
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-row gap-3 mt-3">
+                    {/* 통합대기지수 */}
+                    <View className="flex-1 p-4 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                      <Text className="text-white/50 text-xs">🌫️ 통합대기지수</Text>
+                      <Text className={`text-2xl font-bold mt-1 ${getAqColor(airQuality.khaiGrade)}`}>
+                        {airQuality.khaiValue ?? '-'}
+                      </Text>
+                      <Text className="text-white/40 text-xs mt-1">
+                        {airQuality.khaiGrade}
+                      </Text>
+                    </View>
+
+                    {/* 측정 정보 */}
+                    <View className="flex-1 p-4 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                      <Text className="text-white/50 text-xs">📍 측정소</Text>
+                      <Text className="text-base font-bold text-white mt-1">
+                        {airQuality.stationName}
+                      </Text>
+                      <Text className="text-white/40 text-xs mt-1">
+                        {airQuality.dataTime}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           )}
         </ScrollView>
       )}
     </SafeAreaView>
+    </View>
+    </WeatherBackground>
   );
 }

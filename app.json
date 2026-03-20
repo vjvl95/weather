@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MyApp",
-    "slug": "my-app",
+    "name": "Weather",
+    "slug": "weather",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,6 +32,13 @@
       "expo-router",
       "expo-font"
     ],
-    "scheme": "myapp"
+    "scheme": "myapp",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a1a45981-196b-490f-a799-8bae6973a963"
+      }
+    },
+    "owner": "hongjoowan"
   }
 }

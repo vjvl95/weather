@@ -8,6 +8,16 @@ import { useWeatherFetch } from '@features/weather-fetch';
 import { useLocation } from '@features/location';
 import { useCharacterState } from '@features/character';
 import { TemperatureText, WeatherIcon } from '@entities/weather';
+import type { WeatherCondition } from '@shared/types';
+
+/** 날씨별 카드 배경색 — 배경 그라데이션과 어울리도록 살짝 어둡고 반투명 */
+const CARD_BG: Record<WeatherCondition, string> = {
+  sunny: 'rgba(70, 140, 200, 0.35)',
+  cloudy: 'rgba(100, 100, 110, 0.4)',
+  rainy: 'rgba(60, 70, 90, 0.45)',
+  snowy: 'rgba(130, 150, 180, 0.4)',
+  night: 'rgba(80, 80, 140, 0.8)',
+};
 
 export function HomePage() {
   const router = useRouter();
@@ -23,7 +33,7 @@ export function HomePage() {
   // 위치 변경 시 날씨 가져오기
   useEffect(() => {
     if (currentLocation) {
-      fetchWeather(currentLocation.gridX, currentLocation.gridY);
+      fetchWeather(currentLocation.gridX, currentLocation.gridY, currentLocation.latitude, currentLocation.longitude, currentLocation.name);
     }
   }, [currentLocation]);
 
@@ -51,7 +61,7 @@ export function HomePage() {
   // Pull-to-refresh
   const onRefresh = useCallback(async () => {
     if (currentLocation) {
-      await fetchWeather(currentLocation.gridX, currentLocation.gridY);
+      await fetchWeather(currentLocation.gridX, currentLocation.gridY, currentLocation.latitude, currentLocation.longitude);
     } else {
       await requestGpsLocation();
     }
@@ -81,46 +91,52 @@ export function HomePage() {
           }
           pointerEvents="box-none"
         >
-          {/* 상단: 위치명 (터치로 도시 검색) */}
-          <TouchableOpacity
-            className="items-center pt-4"
-            onPress={() => router.push('/city-search')}
-          >
-            <Text className="text-white/80 text-sm">현재 위치</Text>
-            <Text className="text-white text-lg font-semibold">
-              {currentLocation?.name ?? '위치를 불러오는 중...'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* 초기 로딩 표시 */}
-          {isInitialLoading && (
-            <View className="flex-1 items-center justify-center" pointerEvents="none">
-              <ActivityIndicator size="large" color="rgba(255,255,255,0.7)" />
-              <Text className="text-white/60 text-sm mt-3">날씨를 불러오는 중...</Text>
-            </View>
-          )}
-
-          {/* 하단: 현재 온도 + 날씨 + 시간별 미리보기 */}
-          {current && (
-            <View className="absolute bottom-20 left-0 right-0 items-center" pointerEvents="none">
-              {/* 현재 온도 */}
-              <TemperatureText temperature={current.temperature} size="lg" />
-              <View className="flex-row items-center mt-1">
-                <WeatherIcon condition={current.condition} size={18} hour={new Date().getHours()} />
-                <Text className="text-white text-base ml-1">{current.description}</Text>
-              </View>
-
-              {/* 체감온도 + 습도 */}
-              <View className="flex-row items-center mt-2 gap-4">
-                <Text className="text-white/60 text-xs">
-                  체감 {Math.round(current.feelsLike)}°C
+          {/* 상단 카드: 위치 + 현재 날씨 정보 */}
+          <View className="mx-4 mt-2" pointerEvents="box-none">
+            <View
+              className="w-full rounded-3xl px-6 py-5 items-center"
+              style={{
+                backgroundColor: current ? CARD_BG[current.condition] : 'rgba(70, 140, 200, 0.35)',
+              }}
+            >
+              {/* 위치명 */}
+              <TouchableOpacity
+                className="items-center"
+                onPress={() => router.push('/city-search')}
+              >
+                <Text className="text-white/70 text-xs">현재 위치</Text>
+                <Text className="text-white text-base font-semibold">
+                  {currentLocation?.name ?? '위치를 불러오는 중...'}
                 </Text>
-                <Text className="text-white/60 text-xs">
-                  습도 {current.humidity}%
-                </Text>
-              </View>
+              </TouchableOpacity>
+
+              {/* 현재 온도 + 날씨 */}
+              {current ? (
+                <>
+                  <TemperatureText temperature={current.temperature} size="lg" />
+                  <View className="flex-row items-center mt-1">
+                    <WeatherIcon condition={current.condition} size={18} hour={new Date().getHours()} />
+                    <Text className="text-white text-base ml-1">{current.description}</Text>
+                  </View>
+
+                  {/* 체감온도 + 습도 */}
+                  <View className="flex-row items-center mt-2 gap-4">
+                    <Text className="text-white/60 text-xs">
+                      체감 {Math.round(current.feelsLike)}°C
+                    </Text>
+                    <Text className="text-white/60 text-xs">
+                      습도 {current.humidity}%
+                    </Text>
+                  </View>
+                </>
+              ) : isInitialLoading ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
+                  <Text className="text-white/60 text-xs mt-2">날씨를 불러오는 중...</Text>
+                </View>
+              ) : null}
             </View>
-          )}
+          </View>
 
           {/* 에러 표시 */}
           {error && !isLoading && (
@@ -132,21 +148,6 @@ export function HomePage() {
                 <Text className="text-white/90 text-sm text-center">{error}</Text>
                 <Text className="text-white/60 text-xs text-center mt-1">탭하여 다시 시도</Text>
               </TouchableOpacity>
-            </View>
-          )}
-
-          {/* 디버그 패널 — 출시 전 제거 */}
-          {__DEV__ && (
-            <View className="absolute top-16 right-3" style={{ backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: 8, maxWidth: 200 }} pointerEvents="none">
-              <Text style={{ color: '#0f0', fontSize: 9, fontFamily: 'monospace' }}>
-                [DEBUG]{'\n'}
-                위치: {currentLocation ? `${currentLocation.name} (${currentLocation.gridX},${currentLocation.gridY})` : '없음'}{'\n'}
-                GPS로딩: {locationLoading ? 'Y' : 'N'}{'\n'}
-                API로딩: {isLoading ? 'Y' : 'N'}{'\n'}
-                날씨: {current ? `${current.condition} ${current.temperature}°` : '없음'}{'\n'}
-                시간별: {hourly.length}개{'\n'}
-                에러: {error ?? '없음'}
-              </Text>
             </View>
           )}
         </ScrollView>

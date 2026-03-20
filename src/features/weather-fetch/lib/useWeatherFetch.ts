@@ -4,6 +4,7 @@ import {
   fetchShortForecast,
   parseCurrentWeather,
   parseHourlyForecast,
+  fetchAirQuality,
 } from '@shared/lib';
 import { API_CONFIG } from '@shared/config';
 
@@ -12,11 +13,13 @@ export function useWeatherFetch() {
     current,
     hourly,
     daily,
+    airQuality,
     isLoading,
     error,
     lastFetchedAt,
     setCurrent,
     setHourly,
+    setAirQuality,
     setLoading,
     setError,
     setLastFetchedAt,
@@ -34,7 +37,13 @@ export function useWeatherFetch() {
    * FSD 규칙 준수: location은 파라미터로 받음 (같은 레이어 import 금지)
    * widgets/pages 레이어에서 useLocationStore().currentLocation을 넘겨줌
    */
-  const fetchWeather = useCallback(async (gridX: number, gridY: number): Promise<void> => {
+  const fetchWeather = useCallback(async (
+    gridX: number,
+    gridY: number,
+    lat?: number,
+    lng?: number,
+    locationName?: string,
+  ): Promise<void> => {
     setLoading(true);
     setError(null);
 
@@ -50,8 +59,16 @@ export function useWeatherFetch() {
       const hourlyForecasts = parseHourlyForecast(items);
       setHourly(hourlyForecasts);
 
-      // TODO: 주간 예보 (중기예보 API) — v1에서는 단기예보의 3일치 데이터로 대체
-      // setDaily(dailyForecasts);
+      // 대기질 조회 (실패해도 날씨 데이터는 유지)
+      if (lat != null && lng != null && locationName) {
+        try {
+          const aq = await fetchAirQuality(lat, lng, locationName);
+          setAirQuality(aq);
+        } catch (e) {
+          console.warn('[대기질] 조회 실패 (무시):', e);
+          setAirQuality(null);
+        }
+      }
 
       setLastFetchedAt(Date.now());
     } catch (e) {
@@ -61,7 +78,7 @@ export function useWeatherFetch() {
     } finally {
       setLoading(false);
     }
-  }, [setCurrent, setHourly, setLoading, setError, setLastFetchedAt]);
+  }, [setCurrent, setHourly, setAirQuality, setLoading, setError, setLastFetchedAt]);
 
   /** 앱 포그라운드 복귀 시 조건부 갱신 */
   const refreshIfNeeded = useCallback(async (gridX: number, gridY: number): Promise<void> => {
@@ -74,6 +91,7 @@ export function useWeatherFetch() {
     current,
     hourly,
     daily,
+    airQuality,
     isLoading,
     error,
     fetchWeather,

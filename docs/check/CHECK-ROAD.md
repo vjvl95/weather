@@ -20,3 +20,4 @@
 | WO-014 | Character View — Phase 2 이펙트/그림자 | 검토 완료 | 2026-03-20 |
 | WO-015 | Character View — Phase 3 앵커 이동     | 검토 완료 | 2026-03-20 |
 | WO-016 | Character View — Phase 4 폴리시/접근성 | 검토 완료 | 2026-03-20 |
+| WO-100 | 앱 버전 표시 유틸 함수 생성            | 검토 완료 | 2026-03-20 |

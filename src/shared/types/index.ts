@@ -5,6 +5,7 @@ export type {
   CurrentWeather,
   HourlyForecast,
   DailyForecast,
+  AirQuality,
   LocationInfo,
 } from './weather';
 

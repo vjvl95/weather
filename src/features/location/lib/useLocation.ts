@@ -53,8 +53,15 @@ export function useLocation() {
         longitude,
       });
 
+      // 시도 + 구/시 조합 (예: "서울특별시 강남구", "경기도 수원시")
+      const region = address?.region ?? '';   // 시도 (서울특별시, 경기도 등)
+      const district = address?.district ?? address?.city ?? '';  // 구/시
+      const displayName = region && district
+        ? `${region} ${district}`
+        : region || district || '현재 위치';
+
       const locationInfo: LocationInfo = {
-        name: address?.district ?? address?.city ?? address?.region ?? '현재 위치',
+        name: displayName,
         latitude,
         longitude,
         gridX: nx,

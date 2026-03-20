@@ -39,6 +39,24 @@ export interface DailyForecast {
   temperatureMax: number;
 }
 
+/** 대기질 데이터 */
+export interface AirQuality {
+  /** 측정소명 */
+  stationName: string;
+  /** 통합대기환경지수 */
+  khaiValue: number | null;
+  khaiGrade: string;
+  /** 미세먼지 PM10 (㎍/㎥) */
+  pm10Value: number | null;
+  pm10Grade: string;
+  /** 초미세먼지 PM2.5 (㎍/㎥) */
+  pm25Value: number | null;
+  pm25Grade: string;
+  /** 자외선 지수 (별도 API 없이 시간대 기반 추정) */
+  /** 측정 시각 */
+  dataTime: string;
+}
+
 /** 위치 정보 */
 export interface LocationInfo {
   name: string;

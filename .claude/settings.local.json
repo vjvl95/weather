@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eas:*)",
+      "Bash(eas build:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir -p C:/Users/vjvl9/.claude/commands)",
+      "Bash(cp C:/.claude/start.md C:/.claude/check.md C:/.claude/review.md C:/.claude/fix-check.md C:/Users/vjvl9/.claude/commands/)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
