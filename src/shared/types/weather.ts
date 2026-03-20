@@ -21,6 +21,14 @@ export interface HourlyForecast {
   time: string;
   condition: WeatherCondition;
   temperature: number;
+  /** 강수확률 (%) */
+  rainChance: number;
+  /** 습도 (%) */
+  humidity: number;
+  /** 풍속 (m/s) */
+  windSpeed: number;
+  /** 풍향 (degree, 0=북, 90=동, 180=남, 270=서) */
+  windDirection: number;
 }
 
 /** 주간 예보 항목 */

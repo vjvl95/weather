@@ -63,8 +63,13 @@ export async function fetchShortForecast(
 ): Promise<KmaForecastItem[]> {
   const { baseDate, baseTime } = getBaseDateTime();
 
+  if (!API_CONFIG.SERVICE_KEY) {
+    throw new Error('기상청 API 키가 설정되지 않았어요. .env 파일을 확인해주세요.');
+  }
+
+  // serviceKey는 이미 URL 인코딩된 상태로 발급됨
+  // URLSearchParams를 사용하면 이중 인코딩되어 401 발생 (ERR-009)
   const params = new URLSearchParams({
-    serviceKey: API_CONFIG.SERVICE_KEY,
     numOfRows: '1000',
     pageNo: '1',
     dataType: 'JSON',
@@ -74,20 +79,44 @@ export async function fetchShortForecast(
     ny: String(ny),
   });
 
-  const url = `${API_CONFIG.SHORT_FORECAST_URL}/getVilageFcst?${params}`;
+  const url = `${API_CONFIG.SHORT_FORECAST_URL}/getVilageFcst?serviceKey=${API_CONFIG.SERVICE_KEY}&${params}`;
+
+  console.log('[날씨API] 호출:', { baseDate, baseTime, nx, ny });
+
   const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`기상청 API 호출 실패: ${response.status}`);
   }
 
-  const data: KmaResponse = await response.json();
+  const text = await response.text();
+
+  // 기상청 API가 에러 시 XML로 응답하는 경우 처리
+  if (text.startsWith('<') || text.startsWith('<?xml')) {
+    console.error('[날씨API] XML 응답 (API 키 또는 파라미터 오류):', text.substring(0, 200));
+    throw new Error('기상청 API 인증 오류. API 키를 확인해주세요.');
+  }
+
+  let data: KmaResponse;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error('[날씨API] JSON 파싱 실패:', text.substring(0, 200));
+    throw new Error('기상청 API 응답을 처리할 수 없어요.');
+  }
 
   if (data.response.header.resultCode !== '00') {
+    console.error('[날씨API] 에러 코드:', data.response.header);
     throw new Error(`기상청 API 에러: ${data.response.header.resultMsg}`);
   }
 
-  return data.response.body.items.item;
+  const items = data.response.body?.items?.item;
+  if (!items || items.length === 0) {
+    throw new Error('날씨 데이터가 비어있어요. 잠시 후 다시 시도해주세요.');
+  }
+
+  console.log('[날씨API] 성공:', items.length, '개 항목');
+  return items;
 }
 
 /** 단기예보 응답 → 현재 날씨 파싱 */
@@ -119,8 +148,10 @@ export function parseCurrentWeather(items: KmaForecastItem[]): CurrentWeather {
   };
 }
 
-/** 단기예보 응답 → 시간별 예보 파싱 */
+/** 단기예보 응답 → 시간별 예보 파싱 (API가 제공하는 모든 시간 포함) */
 export function parseHourlyForecast(items: KmaForecastItem[]): HourlyForecast[] {
+  const now = new Date();
+
   // fcstDate + fcstTime 기준으로 그룹핑
   const grouped = new Map<string, Map<string, string>>();
 
@@ -130,26 +161,58 @@ export function parseHourlyForecast(items: KmaForecastItem[]): HourlyForecast[] 
     grouped.get(key)!.set(item.category, item.fcstValue);
   }
 
-  const forecasts: HourlyForecast[] = [];
+  const forecasts: { dateTime: Date; forecast: HourlyForecast }[] = [];
 
   for (const [key, values] of grouped) {
-    const [, timeStr] = key.split('_');
+    const [dateStr, timeStr] = key.split('_');
     const hour = Number(timeStr.substring(0, 2));
+    const year = Number(dateStr.substring(0, 4));
+    const month = Number(dateStr.substring(4, 6)) - 1;
+    const day = Number(dateStr.substring(6, 8));
+    const dateTime = new Date(year, month, day, hour);
+
     const pty = values.get('PTY') ?? '0';
     const sky = values.get('SKY') ?? '1';
     const tmp = Number(values.get('TMP') ?? '0');
+    const pop = Number(values.get('POP') ?? '0');
+    const reh = Number(values.get('REH') ?? '0');
+    const wsd = Number(values.get('WSD') ?? '0');
+    const vec = Number(values.get('VEC') ?? '0');
+
+    // 날짜 라벨: 오늘 "14:00", 내일 "내일 14:00", 모레 이후 "3/22 14:00"
+    const isToday = dateTime.toDateString() === now.toDateString();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = dateTime.toDateString() === tomorrow.toDateString();
+    const dayAfter = new Date(now);
+    dayAfter.setDate(dayAfter.getDate() + 2);
+    const isDayAfter = dateTime.toDateString() === dayAfter.toDateString();
+
+    // 모레 이후는 제외
+    if (!isToday && !isTomorrow && !isDayAfter) continue;
+
+    let timeLabel = `${String(hour).padStart(2, '0')}:00`;
+    if (isTomorrow) timeLabel = `내일 ${timeLabel}`;
+    else if (isDayAfter) timeLabel = `모레 ${timeLabel}`;
 
     forecasts.push({
-      time: `${String(hour).padStart(2, '0')}:00`,
-      condition: mapWeatherCode(pty, sky, hour),
-      temperature: tmp,
+      dateTime,
+      forecast: {
+        time: timeLabel,
+        condition: mapWeatherCode(pty, sky, hour),
+        temperature: tmp,
+        rainChance: pop,
+        humidity: reh,
+        windSpeed: wsd,
+        windDirection: vec,
+      },
     });
   }
 
-  // 시간순 정렬, 최대 24개
+  // 시간순 정렬, 전체 반환 (제한 없음)
   return forecasts
-    .sort((a, b) => a.time.localeCompare(b.time))
-    .slice(0, 24);
+    .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+    .map((f) => f.forecast);
 }
 
 /** 날씨 상태 → 설명 텍스트 */

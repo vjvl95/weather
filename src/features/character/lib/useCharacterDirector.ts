@@ -95,20 +95,32 @@ export function useCharacterDirector() {
     };
   }, [scheduleNextMove, scheduleIdleCheckIn]);
 
-  /** 탭/상호작용 시 이동 타이머 리셋 + 중앙 복귀 */
+  /** 상호작용 시 자동 이동 타이머 리셋 */
   const onInteraction = useCallback(() => {
     if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
-    setAnchor('center-hero');
     scheduleNextMove();
 
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     scheduleIdleCheckIn();
-  }, [setAnchor, scheduleNextMove, scheduleIdleCheckIn]);
+  }, [scheduleNextMove, scheduleIdleCheckIn]);
+
+  /** 자동 이동 일시 중지 (드래그 중 사용) */
+  const pauseAutoMove = useCallback(() => {
+    if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+  }, []);
+
+  /** 자동 이동 재개 */
+  const resumeAutoMove = useCallback(() => {
+    if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+    scheduleNextMove();
+  }, [scheduleNextMove]);
 
   const currentAnchorPosition = ANCHOR_POINTS[runtime.anchorId];
 
   return {
     currentAnchorPosition,
     onInteraction,
+    pauseAutoMove,
+    resumeAutoMove,
   };
 }

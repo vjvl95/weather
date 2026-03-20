@@ -31,9 +31,10 @@ export function SpeechBubble({ message, visible, onAutoHide }: SpeechBubbleProps
 
   return (
     <Animated.View
-      entering={FadeIn.springify().damping(15)}
+      entering={FadeIn.duration(400)}
       exiting={FadeOut.duration(200)}
-      className="bg-white rounded-2xl px-5 py-3 mx-8 mb-4 shadow-md"
+      className="absolute bg-white rounded-2xl px-5 py-3 shadow-md"
+      style={{ bottom: 190, alignSelf: 'center', maxWidth: 280 }}
     >
       <Text className="text-base text-gray-800 text-center leading-6">
         {message}

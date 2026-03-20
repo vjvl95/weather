@@ -10,8 +10,8 @@ export const STORAGE_KEYS = {
 };
 
 export const API_CONFIG = {
-  /** 공공데이터포털 API 키 (사용자가 발급받아 교체) */
-  SERVICE_KEY: 'YOUR_SERVICE_KEY_HERE',
+  /** 공공데이터포털 API 키 (.env에서 로드) */
+  SERVICE_KEY: process.env.EXPO_PUBLIC_KMA_SERVICE_KEY ?? '',
   /** 단기예보 베이스 URL */
   SHORT_FORECAST_URL: 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0',
   /** 중기예보 베이스 URL */

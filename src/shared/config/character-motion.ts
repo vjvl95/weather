@@ -1,13 +1,13 @@
 import type { AnchorId, MotionPreset } from '@shared/types';
 
-/** 앵커 포인트 좌표 (화면 비율 기준, 0~1) */
+/** 앵커 포인트 좌표 (화면 비율 기준, 0~1) — 화면 중앙 부근에 배치 */
 export const ANCHOR_POINTS: Record<AnchorId, { x: number; y: number }> = {
-  'center-hero':     { x: 0.5, y: 0.42 },
-  'top-left-drift':  { x: 0.3, y: 0.30 },
-  'top-right-drift': { x: 0.7, y: 0.30 },
-  'left-peek':       { x: 0.25, y: 0.45 },
-  'right-peek':      { x: 0.75, y: 0.45 },
-  'bottom-rest':     { x: 0.5, y: 0.55 },
+  'center-hero':     { x: 0.5, y: 0.50 },
+  'top-left-drift':  { x: 0.38, y: 0.43 },
+  'top-right-drift': { x: 0.62, y: 0.43 },
+  'left-peek':       { x: 0.35, y: 0.52 },
+  'right-peek':      { x: 0.65, y: 0.52 },
+  'bottom-rest':     { x: 0.5, y: 0.58 },
 };
 
 /** 모션 프리셋별 애니메이션 파라미터 */

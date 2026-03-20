@@ -6,15 +6,16 @@ import Animated, {
 
 interface CharacterShadowProps {
   idleOffsetY: SharedValue<number>;
+  spriteScale: SharedValue<number>;
 }
 
-export function CharacterShadow({ idleOffsetY }: CharacterShadowProps) {
+export function CharacterShadow({ idleOffsetY, spriteScale }: CharacterShadowProps) {
   const shadowStyle = useAnimatedStyle(() => {
-    const scaleX = interpolate(idleOffsetY.value, [-10, 0], [1.15, 1]);
-    const opacity = interpolate(idleOffsetY.value, [-10, 0], [0.15, 0.3]);
+    const idleScaleX = interpolate(idleOffsetY.value, [-10, 0], [1.15, 1]);
+    const opacity = interpolate(idleOffsetY.value, [-10, 0], [0.06, 0.12]);
 
     return {
-      transform: [{ scaleX }, { scaleY: 0.3 }],
+      transform: [{ scaleX: idleScaleX * spriteScale.value }, { scaleY: 0.3 * spriteScale.value }],
       opacity,
     };
   });
@@ -28,7 +29,7 @@ export function CharacterShadow({ idleOffsetY }: CharacterShadowProps) {
           borderRadius: 60,
           backgroundColor: '#000',
           alignSelf: 'center',
-          marginTop: -10,
+          marginTop: -60,
         },
         shadowStyle,
       ]}

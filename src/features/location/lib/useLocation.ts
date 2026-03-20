@@ -25,7 +25,18 @@ export function useLocation() {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== 'granted') {
-        setError('위치 권한이 필요해요. 설정에서 허용해주세요.');
+        // GPS 권한 없으면 기본 위치(서울)로 설정
+        const fallback: LocationInfo = {
+          name: '서울',
+          latitude: 37.5665,
+          longitude: 126.9780,
+          gridX: 60,
+          gridY: 127,
+        };
+        setGpsLocation(fallback);
+        if (!currentLocation) {
+          setCurrentLocation(fallback);
+        }
         return;
       }
 
@@ -57,8 +68,18 @@ export function useLocation() {
         setCurrentLocation(locationInfo);
       }
     } catch (e) {
-      setError('위치를 가져올 수 없어요. 다시 시도해주세요.');
-      console.error('GPS location error:', e);
+      // GPS 실패 시 기본 위치(서울)로 설정
+      const fallback: LocationInfo = {
+        name: '서울',
+        latitude: 37.5665,
+        longitude: 126.9780,
+        gridX: 60,
+        gridY: 127,
+      };
+      setGpsLocation(fallback);
+      if (!currentLocation) {
+        setCurrentLocation(fallback);
+      }
     } finally {
       setLoading(false);
     }

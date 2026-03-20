@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,7 +11,7 @@ import { useCharacterState, useCharacterDirector, useCharacterStore } from '@fea
 import { pickEasing } from '@shared/lib/animations';
 import { AUTO_MOVE_CONFIG } from '@shared/config';
 import { WeatherBackground } from './WeatherBackground';
-import { AmbientEffects } from './AmbientEffects';
+import { AmbientEffects, RainOverlay } from './AmbientEffects';
 import { CharacterShadow } from './CharacterShadow';
 import { CharacterSprite } from './CharacterSprite';
 import { SpeechBubble } from './SpeechBubble';
@@ -43,7 +43,7 @@ export function CharacterView() {
   } = useCharacterState();
 
   const { showBubble } = useCharacterStore();
-  const { currentAnchorPosition, onInteraction } = useCharacterDirector();
+  const { currentAnchorPosition, onInteraction, pauseAutoMove, resumeAutoMove } = useCharacterDirector();
 
   // 진입 시퀀스: 배경 → 캐릭터 → idle → 말풍선
   const [phase, setPhase] = useState<'bg' | 'character' | 'idle' | 'ready'>('bg');
@@ -62,20 +62,27 @@ export function CharacterView() {
 
   // 그림자 연동
   const idleOffsetY = useSharedValue(0);
+  const spriteScale = useSharedValue(1);
 
   // 앵커 이동
   const anchorX = useSharedValue(currentAnchorPosition.x * SCREEN_W);
   const anchorY = useSharedValue(currentAnchorPosition.y * SCREEN_H);
   const moveCountRef = useRef(0);
 
+  // 캐릭터 크기 절반 + 여유 마진
+  const CHAR_HALF = 100;
+  const MARGIN = 20;
+  const clampX = (v: number) => Math.max(CHAR_HALF + MARGIN, Math.min(SCREEN_W - CHAR_HALF - MARGIN, v));
+  const clampY = (v: number) => Math.max(CHAR_HALF + MARGIN, Math.min(SCREEN_H - CHAR_HALF - MARGIN, v));
+
   useEffect(() => {
     const easing = pickEasing(moveCountRef.current);
     moveCountRef.current += 1;
-    anchorX.value = withTiming(currentAnchorPosition.x * SCREEN_W, {
+    anchorX.value = withTiming(clampX(currentAnchorPosition.x * SCREEN_W), {
       duration: AUTO_MOVE_CONFIG.moveDuration,
       easing,
     });
-    anchorY.value = withTiming(currentAnchorPosition.y * SCREEN_H, {
+    anchorY.value = withTiming(clampY(currentAnchorPosition.y * SCREEN_H), {
       duration: AUTO_MOVE_CONFIG.moveDuration,
       easing,
     });
@@ -83,22 +90,31 @@ export function CharacterView() {
 
   const containerStyle = useAnimatedStyle(() => ({
     position: 'absolute' as const,
-    transform: [
-      { translateX: anchorX.value - SCREEN_W / 2 },
-      { translateY: anchorY.value - SCREEN_H / 2 },
-    ],
+    left: anchorX.value - CHAR_HALF,
+    top: anchorY.value - CHAR_HALF,
   }));
 
   const handleTap = () => {
-    onInteraction();
     onCharacterTap();
+  };
+
+  // 드래그로 캐릭터 위치 이동
+  const handleDragMove = (dx: number, dy: number) => {
+    pauseAutoMove(); // 드래그 중 자동 이동 중지
+    anchorX.value = clampX(anchorX.value + dx);
+    anchorY.value = clampY(anchorY.value + dy);
+  };
+
+  // 드래그 종료 시 자동 이동 재개
+  const handleDragEnd = () => {
+    resumeAutoMove();
   };
 
   if (!presentation) return null;
 
   return (
     <WeatherBackground colors={presentation.backgroundColors}>
-      {/* Layer 2: 앰비언트 이펙트 */}
+      {/* Layer 2: 앰비언트 이펙트 (물방울 등 — 캐릭터 뒤) */}
       <MemoizedAmbientEffects effectPreset={presentation.effectPreset} />
 
       {/* 앵커 컨테이너 */}
@@ -112,9 +128,9 @@ export function CharacterView() {
           />
         )}
 
-        {/* 캐릭터 본체 — phase가 'character' 이상이면 표시 */}
+        {/* 캐릭터 본체 (그림자 위에 표시) */}
         {phase !== 'bg' && (
-          <Animated.View entering={FadeIn.duration(400).delay(0)}>
+          <Animated.View entering={FadeIn.duration(400).delay(0)} style={{ zIndex: 1 }}>
             <CharacterSprite
               image={presentation.asset.image}
               motionPreset={presentation.motionPreset}
@@ -122,16 +138,24 @@ export function CharacterView() {
               onTap={handleTap}
               onPetStart={onPetStart}
               onPetEnd={onPetEnd}
+              onDragMove={handleDragMove}
+              onDragEnd={handleDragEnd}
               idleOffsetYOutput={idleOffsetY}
+              scaleOutput={spriteScale}
             />
           </Animated.View>
         )}
 
-        {/* 그림자 */}
+        {/* 그림자 (캐릭터 아래에 표시) */}
         {phase !== 'bg' && (
-          <CharacterShadow idleOffsetY={idleOffsetY} />
+          <View style={{ zIndex: 0 }}>
+            <CharacterShadow idleOffsetY={idleOffsetY} spriteScale={spriteScale} />
+          </View>
         )}
       </Animated.View>
+
+      {/* 빗줄기 — 캐릭터 위에 렌더 (유리창 앞에 비가 내리는 느낌) */}
+      <RainOverlay effectPreset={presentation.effectPreset} />
     </WeatherBackground>
   );
 }

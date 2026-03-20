@@ -26,10 +26,6 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
     set({
       currentCondition: condition,
       presentation,
-      runtime: {
-        ...get().runtime,
-        anchorId: 'center-hero',
-      },
     });
   },
 

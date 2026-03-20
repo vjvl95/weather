@@ -2,9 +2,9 @@ import { Text } from 'react-native';
 import type { TemperatureTextProps } from '../model/types';
 
 const SIZE_CLASSES = {
-  sm: 'text-base text-gray-600',
-  md: 'text-2xl font-semibold text-gray-800',
-  lg: 'text-5xl font-bold text-gray-900',
+  sm: 'text-base text-white/80',
+  md: 'text-2xl font-semibold text-white',
+  lg: 'text-5xl font-bold text-white',
 } as const;
 
 export function TemperatureText({
@@ -12,7 +12,7 @@ export function TemperatureText({
   unit = 'C',
   size = 'md',
 }: TemperatureTextProps) {
-  const symbol = unit === 'C' ? '°' : '°F';
+  const symbol = unit === 'C' ? '°C' : '°F';
 
   return (
     <Text className={SIZE_CLASSES[size]}>
